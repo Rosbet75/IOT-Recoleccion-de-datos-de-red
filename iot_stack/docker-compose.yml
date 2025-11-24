@@ -1,0 +1,54 @@
+version: '3.9'
+
+services:
+  apache:
+    image: php:8.2-apache
+    container_name: apache_iot
+    ports:
+      - "80:80"
+    volumes:
+      - ./www:/var/www/html
+    depends_on:
+      - mysql
+    networks:
+      - iot_net
+    command: >
+      bash -c "docker-php-ext-install mysqli &&
+               apache2-foreground"
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_iot
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: iot
+      MYSQL_USER: iotuser
+      MYSQL_PASSWORD: iotpass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - iot_net
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: pma_iot
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: root123
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+    networks:
+      - iot_net
+
+volumes:
+  mysql_data:
+
+networks:
+  iot_net:
+    driver: bridge
